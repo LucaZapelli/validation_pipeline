@@ -1,0 +1,18 @@
+{
+    "npix": 2,
+    "mcmc_IQU_dense": false,
+    "mcmc_nu_dense": false,
+    "mcmc_pix_dense": false,
+    "iterations": 3000,
+    "burn-in": 1000,
+    "to_sample": [
+        "a_cmb",
+        "a_dust"
+    ],
+    "templates": [
+        "beta_dust",
+        "temp_dust"
+    ],
+    "chain_variance": 4e-8,
+    "pixel": 0
+}
