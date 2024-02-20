@@ -3,15 +3,15 @@
 ###
 
 ### 1. Map Making
- > Insert parameters for the map making into 'map_params.json'
- > Run '1_mapmaking.py'. This will produce:
-    > "True" covariance block matrices
-    > beam Cls
-    > bandpass profiles
-    > mask
-    > pixel windown function Cls
-    > rms maps
-    > 'REAL_#' folders with signal maps
+ - Insert parameters for the map making into 'map_params.json'
+ - Run '1_mapmaking.py'. This will produce:
+    - "True" covariance block matrices
+    - beam Cls
+    - bandpass profiles
+    - mask
+    - pixel windown function Cls
+    - rms maps
+    - 'REAL_#' folders with signal maps
 
 
 ### 2. Covariance definition for Component Separation
