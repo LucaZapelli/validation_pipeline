@@ -44,6 +44,7 @@ class MCMC:
 		self.IQU_corr = parameters['mcmc_IQU_dense']
 		self.pix_corr = parameters['mcmc_pix_dense']
 		self.nu_corr = parameters['mcmc_nu_dense']
+		self.path = parameters['print_path'] + parameters['cov_path'] + 'precond_REAL_' + self.noise_realization +'/' 
 
 		self.AMPLITUDES, self.SPEC_PARAMS = {}, {}
 		self.components = data['components']
@@ -102,6 +103,7 @@ class MCMC:
 			self.burn_in = 0
             	
 		self.mcmc_step = np.sqrt(parameters['chain_variance'])
+		self.use_chains_covariance = parameters['use_chains_covariance']
 		self.to_sample = []
 		
 		## Set intial values and priors
@@ -337,13 +339,27 @@ class MCMC:
 	
 	def chain(self,i,optimize=False):
 	
-		for k,key in enumerate(self.AMPLITUDES.keys()):
-			self.old_AMPLITUDES[key] = self.AMPLITUDES[key].copy()
-			self.AMPLITUDES[key] += np.random.randn(self.npix) * self.STEPS[key]
+		if not self.use_chains_covariance:  ## preconditioning run
+			for k,key in enumerate(self.AMPLITUDES.keys()):
+				self.old_AMPLITUDES[key] = self.AMPLITUDES[key].copy()
+				self.AMPLITUDES[key] += np.random.randn(self.npix) * self.STEPS[key]
 		
-		for k,key in enumerate(self.SPEC_PARAMS.keys()):
-			self.old_SPEC_PARAMS[key] = self.SPEC_PARAMS[key].copy()
-			self.SPEC_PARAMS[key] += np.random.randn(self.npix) * self.STEPS[key]  
+			for k,key in enumerate(self.SPEC_PARAMS.keys()):
+				self.old_SPEC_PARAMS[key] = self.SPEC_PARAMS[key].copy()
+				self.SPEC_PARAMS[key] += np.random.randn(self.npix) * self.STEPS[key]  
+		else:
+			samps = np.zeros((self.npars,self.npix))
+			for p in range(self.npix):
+				samps[:,p] = self.FULL_SQRTCOV @ np.random.randn(self.npars)
+
+			for k,key in enumerate(self.AMPLITUDES.keys()):
+				self.old_AMPLITUDES[key] = self.AMPLITUDES[key].copy()
+				self.AMPLITUDES[key] += samps[k]
+
+			for k,key in enumerate(self.SPEC_PARAMS.keys()):
+				self.old_SPEC_PARAMS[key] = self.SPEC_PARAMS[key].copy()
+				self.SPEC_PARAMS[key] += samps[3 * len(self.components) + k]
+
 		
 		
 		#########-----  Check Proposal  -----#########
@@ -385,21 +401,43 @@ class MCMC:
 
 	def decorr_chain(self,i,pix,stokes,optimize=False):
 		
-		for k,key in enumerate(self.AMPLITUDES.keys()):
-			self.old_AMPLITUDES[key] = self.AMPLITUDES[key].copy()
+		if not self.use_chains_covariance:  ## preconditioning run
+			for k,key in enumerate(self.AMPLITUDES.keys()):
+				self.old_AMPLITUDES[key] = self.AMPLITUDES[key].copy()
+				if pix == -1:
+					self.AMPLITUDES[key] += np.random.randn(self.npix) * self.STEPS[key]
+				else:
+					self.AMPLITUDES[key][pix] += np.random.randn() * self.STEPS[key][pix]	
+		
+			for k,key in enumerate(self.SPEC_PARAMS.keys()):
+				self.old_SPEC_PARAMS[key] = self.SPEC_PARAMS[key].copy()
+				if pix == -1:
+					self.SPEC_PARAMS[key] += np.random.randn(self.npix) * self.STEPS[key]
+				else:
+					self.SPEC_PARAMS[key][pix] += np.random.randn() * self.STEPS[key][pix]  
+		else:
 			if pix == -1:
-				self.AMPLITUDES[key] += np.random.randn(self.npix) * self.STEPS[key]
+				samps = np.zeros((self.npars,self.npix))
+				for p in range(self.npix):
+					samps[:,p] = self.FULL_SQRTCOV @ np.random.randn(self.npars)
 			else:
-				self.AMPLITUDES[key][pix] += np.random.randn() * self.STEPS[key][pix]
-		
-		
-		for k,key in enumerate(self.SPEC_PARAMS.keys()):
-			self.old_SPEC_PARAMS[key] = self.SPEC_PARAMS[key].copy()
-			if pix == -1:
-				self.SPEC_PARAMS[key] += np.random.randn(self.npix) * self.STEPS[key]
-			else:
-				self.SPEC_PARAMS[key][pix] += np.random.randn() * self.STEPS[key][pix]  
-		
+				samps = self.FULL_SQRTCOV @ np.random.randn(self.npars)
+
+			for k,key in enumerate(self.AMPLITUDES.keys()):
+				self.old_AMPLITUDES[key] = self.AMPLITUDES[key].copy()
+				if pix == -1:
+					self.AMPLITUDES[key] += samps[k]
+				else:
+					self.AMPLITUDES[key][pix] += samps[k]
+
+			for k,key in enumerate(self.SPEC_PARAMS.keys()):
+				self.old_SPEC_PARAMS[key] = self.SPEC_PARAMS[key].copy()
+				if pix == -1:
+					self.SPEC_PARAMS[key] += samps[3 * len(self.components) + k]
+				else:
+					self.SPEC_PARAMS[key][pix] += samps[3 * len(self.components) + k]
+
+
 		
 		#########-----  Check Proposal  -----#########
 		
@@ -459,7 +497,24 @@ class MCMC:
 		print('\033[1m'+'Computing TOTAL initial Chi square'+'\033[0m')
 		self.old_prob = -0.5 * self.chi_sq() + self.prior_cut()
 		
-		
+	
+		### Preconditioning if asked
+		if self.use_chains_covariance:
+			path = self.path + 'chain_sqrt_cov.dat'
+			SQRTCOV = []
+			with open(path,'r') as filename:
+				for line in filename.readlines():
+					SQRTCOV.append([float(el) for el in line[:-1].split('\t')])
+				SQRTCOV = np.array(SQRTCOV)
+
+			if np.shape(SQRTCOV) != (len(self.to_sample),len(self.to_sample)): 
+				raise ValueError('Chain covariance preconditioner has wrong shape.')
+
+			# Fill with unsampled parameters
+			self.FULL_SQRTCOV = np.zeros((self.npars,self.npars))
+			self.FULL_SQRTCOV[:len(self.to_sample),:len(self.to_sample)] = SQRTCOV.copy() / 5 # 'normalization'-ish
+
+
 		### Actual Sampling
 		self.old_AMPLITUDES, self.old_SPEC_PARAMS = {}, {}
 		self.samples = np.empty(((self.it, self.npix, self.npars)))
@@ -498,6 +553,23 @@ class MCMC:
 		print('\033[1m'+'Computing initial Chi square'+'\033[0m')
 		self.old_prob = -0.5 * self.decorr_chi_sq(pix,stokes) + self.decorr_prior_cut(pix,stokes)
 		
+
+		### Preconditioning if asked
+		if self.use_chains_covariance:
+			path = self.path + 'chain_sqrt_cov.dat'
+			SQRTCOV = []
+			with open(path,'r') as filename:
+				for line in filename.readlines():
+					SQRTCOV.append([float(el) for el in line[:-1].split('\t')])
+				SQRTCOV = np.array(SQRTCOV)
+
+			if np.shape(SQRTCOV) != (len(self.to_sample),len(self.to_sample)):
+				raise ValueError('Chain covariance preconditioner has wrong shape.')
+
+			# Fill with unsampled parameters
+			self.FULL_SQRTCOV = np.zeros((self.npars,self.npars))
+			self.FULL_SQRTCOV[:len(self.to_sample),:len(self.to_sample)] = SQRTCOV.copy() / 5 # 'normalization'-ish
+
 		
 		### Actual Sampling
 		self.old_AMPLITUDES, self.old_SPEC_PARAMS = {}, {}
