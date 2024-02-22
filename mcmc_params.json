@@ -1,7 +1,7 @@
 {
     "npix": 2,
     "mcmc_IQU_dense": false,
-    "mcmc_nu_dense": false,
+    "mcmc_nu_dense": true,
     "mcmc_pix_dense": false,
     "iterations": 3000,
     "burn-in": 1000,
@@ -13,6 +13,7 @@
         "beta_dust",
         "temp_dust"
     ],
-    "chain_variance": 2e-8,
+    "chain_variance": 4e-8,
+    "use_chains_covariance": false,
     "pixel": 0
 }

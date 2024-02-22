@@ -49,6 +49,7 @@ noise_realization = str(sys.argv[1])
 mcmc_realization  = str(sys.argv[2])
 mcmc_params['noise_realization'] = noise_realization
 mcmc_params['mcmc_realization']  = mcmc_realization
+mcmc_params['cov_path'] = cov_path
 
 ## Building mcmc covariance
 mcmc_inv_cov = utils.build_mcmc_covs(nus = map_params['nus'],\
@@ -93,6 +94,9 @@ mcmc.decorr_metropolis(pix=PIXEL, stokes = '', optimize=False)
 
 
 ## Save results
+if REAL_'+noise_realization' not in os.listdir(map_params['print_path']+cov_path):
+	os.system('mkdir '+map_params['print_path']+cov_path+'REAL_'+noise_realization)
+
 fig,ax = plt.subplots(mcmc.npars,2,figsize=(15,mcmc.npars*4))
 for i,name in enumerate(mcmc.names):
 	ax[i,0].plot(mcmc.samples[:,PIXEL,i])
