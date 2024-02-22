@@ -50,6 +50,11 @@ mcmc_realization  = str(sys.argv[2])
 mcmc_params['noise_realization'] = noise_realization
 mcmc_params['mcmc_realization']  = mcmc_realization
 mcmc_params['cov_path'] = cov_path
+if mcmc_params['use_chains_covariance']:
+	real_path = 'REAL_' + noise_realization
+else:
+	real_path = 'precond_REAL_' + noise_realization
+
 
 ## Building mcmc covariance
 mcmc_inv_cov = utils.build_mcmc_covs(nus = map_params['nus'],\
@@ -94,8 +99,8 @@ mcmc.decorr_metropolis(pix=PIXEL, stokes = '', optimize=False)
 
 
 ## Save results
-if REAL_'+noise_realization' not in os.listdir(map_params['print_path']+cov_path):
-	os.system('mkdir '+map_params['print_path']+cov_path+'REAL_'+noise_realization)
+if real_path not in os.listdir(map_params['print_path']+cov_path):
+	os.system('mkdir '+map_params['print_path']+cov_path+real_path)
 
 fig,ax = plt.subplots(mcmc.npars,2,figsize=(15,mcmc.npars*4))
 for i,name in enumerate(mcmc.names):
@@ -110,14 +115,14 @@ for i,name in enumerate(mcmc.names):
 	ax[i,1].vlines(np.average(mcmc.samples[mcmc.burn_in:,PIXEL,i]), 0, y.max(), label="Average", colors="r")
 	ax[i,1].set_title(name)
 	ax[i,1].legend(loc="upper left")
-fig.savefig(map_params['print_path']+cov_path+'REAL_'+noise_realization+\
+fig.savefig(map_params['print_path']+cov_path+real_path+\
             '/Param_chains_n'+mcmc_realization+'.png',dpi=300)
 
 
-mcmc.plot_results(png_title = map_params['print_path']+cov_path+'REAL_'+noise_realization+\
+mcmc.plot_results(png_title = map_params['print_path']+cov_path+real_path+\
                   '/Freq_spectra_n'+mcmc_realization)
 
-stream = open(map_params['print_path']+cov_path+'REAL_'+noise_realization+\
+stream = open(map_params['print_path']+cov_path+real_path+\
               '/Chain_log_n'+mcmc_realization+'.txt','w')
 stream.write('Iterations: '+str(mcmc.it)+'\n')
 stream.write('Burn-in: '+str(mcmc.burn_in)+'\n')
@@ -145,5 +150,5 @@ for i,name in enumerate(mcmc.SPEC_PARAMS.keys()):
 
 stream.close()
 
-os.system('scp mcmc_params.json '+map_params['print_path']+cov_path)
+os.system('scp mcmc_params.json '+map_params['print_path']+cov_path+real_path)
 
