@@ -512,7 +512,7 @@ class MCMC:
 
 			# Fill with unsampled parameters
 			self.FULL_SQRTCOV = np.zeros((self.npars,self.npars))
-			self.FULL_SQRTCOV[:len(self.to_sample),:len(self.to_sample)] = SQRTCOV.copy() / 5 # 'normalization'-ish
+			self.FULL_SQRTCOV[:len(self.to_sample),:len(self.to_sample)] = SQRTCOV.copy()
 
 
 		### Actual Sampling
@@ -568,7 +568,7 @@ class MCMC:
 
 			# Fill with unsampled parameters
 			self.FULL_SQRTCOV = np.zeros((self.npars,self.npars))
-			self.FULL_SQRTCOV[:len(self.to_sample),:len(self.to_sample)] = SQRTCOV.copy() / 5 # 'normalization'-ish
+			self.FULL_SQRTCOV[:len(self.to_sample),:len(self.to_sample)] = SQRTCOV.copy()
 
 		
 		### Actual Sampling
