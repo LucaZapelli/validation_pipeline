@@ -47,8 +47,8 @@ if glob_pars['print_path'] != '':
 pixwin = hp.pixwin(inst.nside, pol=True, lmax=inst.nside*4)
 if glob_pars['print_path'] != '':
 	N_digits = int(np.log10(inst.nside)) + 1
-	os.system('scp /pbs/home/l/lzapelli/software/Healpix_3.81/data/pixel_window_n'+\
-                  '0'*(4-N_digits) + str(inst.nside) + '.fits '+glob_pars['print_path'])
+	#os.system('scp /path/to/pixel_window_n'+\
+        #          '0'*(4-N_digits) + str(inst.nside) + '.fits '+glob_pars['print_path'])
 
 	for i,f in enumerate(inst.nus/1e9):
 		beam = hp.gauss_beam(fwhm=inst.fwhm[i] * np.pi/(180*60),lmax=inst.nside*4,pol=True)[:,0]
