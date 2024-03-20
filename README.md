@@ -11,7 +11,7 @@
     - mask
     - pixel windown function Cls
     - rms maps
-    - 'REAL_#' folders with signal maps
+    - 'REAL_#' folders containing signal maps
 
 
 ### 2. Covariance definition for Component Separation
@@ -22,8 +22,8 @@
 
 
 ### 3. Component Separation
- - Run '3_my_component_separation.py'. This will produce a folder associated to the choosen 
- -  covariance configuration and noise realization, containing:
+ - Run '3_my_component_separation.py'. This will produce a folder associated to the chosen 
+   covariance configuration and noise realization, containing:
     - Chain logs
     - Frequency spectra reconstruction (plots)
     - Parameters chains (plots)
